@@ -3,7 +3,9 @@ from .parsers import *
 import zipfile
 import tempfile
 import os
-
+from www.services.etl.transformer import transform_dataframe
+from www.services.etl.validator import validate_dataframe
+import pandas as pd
 
 def format_ab_column(entry, source, file_type):         # Function for AB Column (format--> "Abstract")
     abstract = ''
@@ -1632,11 +1634,21 @@ def process_single_file(data, source, file_type, author):
             entry_data.pop('AF', None)  # Remove 'AF' if it exists
         elif author == "fullname":
             entry_data.pop('AU', None)  # Remove 'AU' if it exists
+            entries.append(entry_data)
 
-        entries.append(entry_data)
+    # =====================================================
+    # ETL STANDARDIZATION + VALIDATION PIPELINE
+    # =====================================================
 
-    return entries
+    df = pd.DataFrame(entries)
 
+    try:
+        df = transform_dataframe(df, source.upper())
+        validate_dataframe(df)
+    except Exception as e:
+        print(f"ETL Validation Warning: {e}")
+
+    return df.to_dict(orient="records")
 
 def biblio_json(data, source, type, author):
     """
