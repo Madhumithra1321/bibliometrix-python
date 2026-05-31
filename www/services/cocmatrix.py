@@ -10,7 +10,7 @@ def cocMatrix(df, Field="AU", type="sparse", n=None, sep=";", binary=True,
 
     # Support both wrapped objects and pandas DataFrames
     if hasattr(df, "get") and not isinstance(df, pd.DataFrame):
-        M = df.get()
+        M = df
     else:
         M = df
 

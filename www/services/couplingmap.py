@@ -15,8 +15,8 @@ def couplingMap(df, analysis="documents", field="CR", n=500, minfreq=5,
         print('\nanalysis argument is incorrect.\n\nPlease select one of the following choices: "documents", "authors", "sources"\n\n')
         return None
 
-    df = metaTagExtraction(df, "SR") # serve questo per avere il merging perfetto per uniformare la colonna SR
-    M = df.get()
+    df = metaTagExtraction(df, "SR")
+    M = df
 
     ngrams = int(ngrams)
     minfreq = max(0, int(minfreq * len(M) // 1000))
@@ -517,7 +517,7 @@ def best_lab(df, tab_global, n_labels, term):
 
 def localCitations(df, fast_search=False, sep=";"):
     df = metaTagExtraction(df, "SR")
-    M = df.get() 
+    M = df
     M['TC'] = M['TC'].fillna(0)
     if fast_search:
         loccit = M['TC'].quantile(0.75)

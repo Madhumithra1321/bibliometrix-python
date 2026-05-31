@@ -2,19 +2,8 @@ from .utils import *
 
 
 def metaTagExtraction(df, Field="AU_CO", sep=";", aff_disamb=False):
-    """
-    Extract metadata tags from a DataFrame based on the specified field.
-    
-    Args:
-        df: A DataFrame object containing the data.
-        Field: The field to extract metadata tags from.
-        sep: The separator used to split the metadata tags.
-        aff_disamb: A boolean value indicating whether to disambiguate the affiliations.
-    
-    Returns:
-        A DataFrame with the extracted metadata tags.
-    """
-    M = df.get()
+ 
+    M = df
 
     if Field == "SR":
         M = SR(M)
@@ -41,34 +30,58 @@ def metaTagExtraction(df, Field="AU_CO", sep=";", aff_disamb=False):
             a = ind[ind > -1].index
             M.loc[a, "AU1_UN"] = M.loc[a, "AU1_UN"].str[ind[a] + 2:]
 
-    df.set(M)
+    df = M
     
     return df
 
 
 def SR(M):
     listAU = M["AU"].apply(lambda l: [x.strip() for x in l])
+
     if M["DB"].iloc[0].lower() == "scopus":
-        listAU = listAU.apply(lambda l: [x.replace(" ", ",").replace(",,", ",").replace(" ", "") for x in l])
-    FirstAuthors = listAU.apply(lambda l: l[0] if len(l) > 0 else "NA").str.replace(",", " ")
+        listAU = listAU.apply(
+            lambda l: [
+                x.replace(" ", ",")
+                 .replace(",,", ",")
+                 .replace(" ", "")
+                for x in l
+            ]
+        )
+
+    FirstAuthors = listAU.apply(
+        lambda l: l[0] if len(l) > 0 else "NA"
+    ).str.replace(",", " ")
+
+    # OpenAlex compatibility
+    if "JI" not in M.columns:
+        if "SO" in M.columns:
+            M["JI"] = M["SO"]
+        else:
+            M["JI"] = ""
 
     no_art = M["JI"] == ""
     M.loc[no_art, "JI"] = M.loc[no_art, "SO"]
+
     J9 = M["JI"].str.replace(".", " ", regex=False).str.strip()
+
     SR = FirstAuthors + ", " + M["PY"].astype(str) + ", " + J9
 
     M["SR_FULL"] = SR.str.replace(r"\s+", " ", regex=True)
 
-    st = i = 0
+    st = 0
+    i = 0
+
     while st == 0:
         ind = SR.duplicated()
+
         if ind.any():
             i += 1
             SR[ind] = SR[ind] + "-" + chr(96 + i)
         else:
             st = 1
+
     M["SR"] = SR.str.replace(r"\s+", " ", regex=True)
-    
+
     return M
 
 

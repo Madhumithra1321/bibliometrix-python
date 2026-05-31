@@ -3,23 +3,8 @@ from .cocmatrix import *
 
 
 def histNetwork(df, min_citations=0, sep=";", network=True):
-    """
-    Create a historical network of citations from a DataFrame containing metadata of scientific papers.
-    
-    Args:
-        df (DataFrame): A DataFrame containing metadata of scientific papers.
-        min_citations (int): Minimum number of citations to include a paper in the analysis.
-        sep (str): Separator used to separate references in the citation network.
-        network (bool): If True, a citation network is created.
-    
-    Returns:
-        A dictionary containing the following keys:
-            - NetMatrix: A DataFrame containing the citation network.
-            - histData: A DataFrame containing the metadata of the papers.
-            - M: A DataFrame containing the metadata of the papers with the Local Citation Score (LCS).
-            - LCS: A list containing the Local Citation Score of each paper.
-    """
-    M = df.get()
+
+    M = df
     db = M['DB'][0]
 
     # Ensure required fields are present
@@ -35,12 +20,17 @@ def histNetwork(df, min_citations=0, sep=";", network=True):
     M['TC'] = M['TC'].fillna(0)
 
     if db == "Web_of_Science":
-        results = wos(M, min_citations=min_citations, sep=sep, network=network)
+    results = wos(M, min_citations=min_citations, sep=sep, network=network)
+
     elif db == "Scopus":
-        results = scopus(M, min_citations=min_citations, sep=sep, network=network)
+    results = scopus(M, min_citations=min_citations, sep=sep, network=network)
+
+    elif db == "OPENALEX":
+    results = wos(M, min_citations=min_citations, sep=sep, network=network)
+
     else:
-        print("\nDatabase not compatible with direct citation analysis\n")
-        return None
+    print("\nDatabase not compatible with direct citation analysis\n")
+    return None
 
     return results
 

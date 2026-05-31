@@ -46,7 +46,6 @@ def get_collaboration_network(
     print("Generating collaboration network...")
 
     M = df
-    m = df.get()
     NetRefs = None
     Title = ""
 
