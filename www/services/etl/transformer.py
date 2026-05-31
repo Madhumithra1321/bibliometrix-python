@@ -14,12 +14,21 @@ def ensure_required_columns(df):
     return df
 
 def split_multi_value(value):
-    
-    if pd.isna(value) or value == "":
-        return []
 
     if isinstance(value, list):
         return value
+
+    if value is None:
+        return []
+
+    try:
+        if pd.isna(value):
+            return []
+    except Exception:
+        pass
+
+    if str(value).strip() == "":
+        return []
 
     return [
         item.strip()

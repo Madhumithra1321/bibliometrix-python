@@ -71,8 +71,8 @@ def biblionetwork(M, analysis="coupling", network="authors", n=None, sep=";", sh
         filtered_index = [idx for idx in NetMatrix.index if str(idx).strip()]
         NetMatrix = NetMatrix.loc[filtered_index, filtered_columns]
 
-        M = M.get()  # Estrai il dizionario se M è un oggetto
-
+        # M is already a DataFrame
+        
         db_name = M["DB"].iloc[0]
         print(f"db_name: {db_name}")
         if network == "references" and db_name == "SCOPUS":

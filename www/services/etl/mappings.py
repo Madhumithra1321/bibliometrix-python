@@ -1,8 +1,3 @@
-"""
-Mapping dictionaries for converting source-specific
-fields into Web of Science standard tags.
-"""
-
 SCOPUS_MAPPING = {
     "Authors": "AU",
     "Author full names": "AF",
@@ -48,5 +43,10 @@ OPENALEX_MAPPING = {
     "doi": "DI",
     "title": "TI",
     "publication_year": "PY",
-    "abstract": "AB"
+    "abstract": "AB",
+    "display_name": "SO",
+    "referenced_works": "CR",
+    "authorships": "AU",
+    "institutions": "C1",
+    "cited_by_count": "TC"
 }

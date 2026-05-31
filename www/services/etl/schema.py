@@ -15,6 +15,7 @@ MULTI_VALUE_COLUMNS = [
 ]
 
 REQUIRED_COLUMNS = [
+    "SR",
     "AU",
     "AF",
     "TI",
@@ -28,5 +29,7 @@ REQUIRED_COLUMNS = [
     "AB",
     "TC",
     "DT",
-    "LA"
+    "LA",
+    "DB",
+    "RP"
 ]
