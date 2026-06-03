@@ -6,7 +6,7 @@ from .networkplot import *
 from .histnetwork import *
 from .metatagextraction import *
 from .tabletag import *
-
+import pandas as pd
 def couplingMap(df, analysis="documents", field="CR", n=500, minfreq=5,
                 ngrams=1, community_repulsion=0.1, impact_measure="local",
                 stemming=False, size=0.5, label_term=None, n_labels=1, repel=True, clustering="walktrap"):
@@ -308,68 +308,95 @@ def couplingMap(df, analysis="documents", field="CR", n=500, minfreq=5,
 #### FUNCTION DA METTERE IN SERVICES???
 # Normalizzazione del punteggio di citazione
 def normalizeCitationScore(df, field="documents", impact_measure="local"):
+
     if field not in ["documents", "authors", "sources"]:
-        print('\nfield argument is incorrect.\n\nPlease select one of the following choices: "documents", "authors", "sources"\n\n')
+        print(
+            '\nfield argument is incorrect.\n\n'
+            'Please select one of the following choices: '
+            '"documents", "authors", "sources"\n\n'
+        )
         return None
 
-    # Applica localCitations se richiesto
+    # OpenAlex workaround
     if impact_measure == "local":
-        df = localCitations(df, fast_search=False, sep=";")['M']
+
+        if df["DB"].iloc[0] == "OPENALEX":
+            df["LCS"] = 1
+
+        else:
+            df = localCitations(
+                df,
+                fast_search=False,
+                sep=";"
+            )["M"]
+
     else:
-        df['LCS'] = 0
+        df["LCS"] = 0
 
-    # Converte colonne in numerico
-    df['TC'] = df['TC'].astype(float, errors='ignore')
-    df['PY'] = df['PY'].astype(float, errors='ignore')
+    df["TC"] = pd.to_numeric(df["TC"], errors="coerce")
+    df["PY"] = pd.to_numeric(df["PY"], errors="coerce")
 
-    # Rimpiazza LCS=0 con 1 e calcola NGCS/NLCS per anno
-    df['LCS'] = df['LCS'].replace(0, 1)
-    df['NGCS'] = df.groupby('PY')['TC'].transform(lambda x: x / x.mean(skipna=True))
-    df['NLCS'] = df.groupby('PY')['LCS'].transform(lambda x: x / x.mean(skipna=True))
+    df["LCS"] = df["LCS"].replace(0, 1)
 
-    # Suddivisione per tipo di campo richiesto
+    df["NGCS"] = df.groupby("PY")["TC"].transform(
+        lambda x: x / x.mean()
+    )
+
+    df["NLCS"] = df.groupby("PY")["LCS"].transform(
+        lambda x: x / x.mean()
+    )
+
     if field == "documents":
-        NCS = df[['SR', 'PY', 'NGCS', 'NLCS', 'TC', 'LCS']].rename(columns={
-            'NGCS': 'MNGCS',
-            'NLCS': 'MNLCS',
-            'LCS': 'LC',
-            'SR': 'documents'
-        })
+
+        NCS = df[
+            ["SR", "PY", "NGCS", "NLCS", "TC", "LCS"]
+        ].rename(
+            columns={
+                "SR": "documents",
+                "NGCS": "MNGCS",
+                "NLCS": "MNLCS",
+                "LCS": "LC"
+            }
+        )
 
     elif field == "authors":
-        df['AU'] = df['AU'].fillna('').str.split(';')  # Divide gli autori
-        exploded = df.explode('AU').assign(AU=lambda x: x['AU'].str.strip())  # Espande e rimuove spazi extra
 
-        NCS = (
-            exploded.groupby('AU').agg(
-                NP=('PY', 'count'),
-                MNGCS=('NGCS', 'mean'),
-                MNLCS=('NLCS', 'mean'),
-                TC=('TC', 'mean'),
-                LC=('LCS', 'mean')
-            )
-            .reset_index()
-            .rename(columns={'AU': 'authors'})
+        exploded = (
+            df.assign(AU=df["AU"].str.split(";"))
+            .explode("AU")
         )
 
-    elif field == "sources":
         NCS = (
-            df.groupby('SO').agg(
-                NP=('PY', 'count'),
-                MNGCS=('NGCS', 'mean'),
-                MNLCS=('NLCS', 'mean'),
-                TC=('TC', 'mean'),
-                LC=('LCS', 'mean')
+            exploded.groupby("AU")
+            .agg(
+                NP=("PY", "count"),
+                MNGCS=("NGCS", "mean"),
+                MNLCS=("NLCS", "mean"),
+                TC=("TC", "mean"),
+                LC=("LCS", "mean")
             )
             .reset_index()
-            .rename(columns={'SO': 'sources'})
+            .rename(columns={"AU": "authors"})
         )
 
-    # Gestione impatto globale
-    if impact_measure == "global":
-        NCS.drop(columns=['MNLCS', 'LC'], errors='ignore', inplace=True)
     else:
-        NCS['MNLCS'] = NCS['MNLCS'].fillna(0)
+
+        NCS = (
+            df.groupby("SO")
+            .agg(
+                NP=("PY", "count"),
+                MNGCS=("NGCS", "mean"),
+                MNLCS=("NLCS", "mean"),
+                TC=("TC", "mean"),
+                LC=("LCS", "mean")
+            )
+            .reset_index()
+            .rename(columns={"SO": "sources"})
+        )
+
+    if impact_measure == "global":
+        NCS["MNLCS"] = NCS["MNGCS"]
+        NCS["LC"] = NCS["TC"]
 
     return NCS
 

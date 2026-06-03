@@ -5,7 +5,7 @@ from .cocmatrix import *
 def histNetwork(df, min_citations=0, sep=";", network=True):
 
     M = df
-    db = M['DB'][0]
+    db = M['DB'].iloc[0]
 
     # Ensure required fields are present
     if 'DI' not in M:
@@ -20,17 +20,32 @@ def histNetwork(df, min_citations=0, sep=";", network=True):
     M['TC'] = M['TC'].fillna(0)
 
     if db == "Web_of_Science":
-    results = wos(M, min_citations=min_citations, sep=sep, network=network)
+        results = wos(
+            M,
+            min_citations=min_citations,
+            sep=sep,
+            network=network
+        )
 
     elif db == "Scopus":
-    results = scopus(M, min_citations=min_citations, sep=sep, network=network)
+        results = scopus(
+            M,
+            min_citations=min_citations,
+            sep=sep,
+            network=network
+        )
 
     elif db == "OPENALEX":
-    results = wos(M, min_citations=min_citations, sep=sep, network=network)
+        results = wos(
+            M,
+            min_citations=min_citations,
+            sep=sep,
+            network=network
+        )
 
     else:
-    print("\nDatabase not compatible with direct citation analysis\n")
-    return None
+        print("\nDatabase not compatible with direct citation analysis\n")
+        return None
 
     return results
 
