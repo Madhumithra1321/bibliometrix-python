@@ -81,36 +81,98 @@ def wos(M, min_citations, sep, network):
     print(f"\nAnalyzing {len(CR)} reference items...\n")
 
     CR_df = pd.DataFrame(CR)
+    if M["DB"].iloc[0] == "OPENALEX":
 
+     M["UT_CLEAN"] = (
+        M["UT"]
+        .fillna("")
+        .astype(str)
+        .str.upper()
+        .str.replace(".", "", regex=False)
+    )
+
+    CR_df["UT_CLEAN"] = (
+        CR_df["ref"]
+        .fillna("")
+        .astype(str)
+        .str.upper()
+        .str.replace(".", "", regex=False)
+    )
+
+    L = pd.merge(
+        M,
+        CR_df,
+        left_on="UT_CLEAN",
+        right_on="UT_CLEAN",
+        how="left"
+    )
+
+    
+
+    L = L[L["Paper_y"].notnull()]
+
+        
     # Add LABEL field to M and CR
-    M['LABEL'] = M['SR_FULL'].fillna('').str.upper() + " DOI " + M['DI'].fillna('').str.upper()
+    label_col = 'SR_FULL' if 'SR_FULL' in M.columns else 'SR'
+
+    M['LABEL'] = (
+    M[label_col].fillna('').astype(str).str.upper()
+    + " DOI "
+    + M['DI'].fillna('').astype(str).str.upper())
+
     M['LABEL'] = M['LABEL'].str.strip()
     CR_df['LABEL'] = CR_df['SR'].fillna('').str.upper() + " DOI " + CR_df['DI'].fillna('').str.upper()
     CR_df['LABEL'] = CR_df['LABEL'].str.strip()
 
+    
+
     # Match references with papers (left join as in R)
-    L = pd.merge(M, CR_df, on='LABEL', how='left', suffixes=('_M', '_CR'))
-    L = L[L['Paper_CR'].notnull()]
-    L['CITING'] = M.loc[L['Paper_CR'], 'LABEL'].values
-    L['nCITING'] = M.loc[L['Paper_CR'], 'nLABEL'].values
-    L['CIT_PY'] = M.loc[L['Paper_CR'], 'PY'].values
+    L = pd.merge(
+    M,
+    CR_df,
+    left_on="UT_CLEAN",
+    right_on="UT_CLEAN",
+    how="left"
+)
+
+    
+    L = L[L["Paper_y"].notnull()]
+    L["CITING"] = M.loc[L["Paper_x"].astype(int), "UT"].values
+    L["CITED"]  = M.loc[L["Paper_y"].astype(int), "UT"].values
+    L["CIT_PY"] = M.loc[L["Paper_x"].astype(int), "PY"].values
 
     # Compute Local Citation Scores (LCS)
-    LCS = L.groupby('nLABEL').size().reset_index(name='LCS')
-    M['LCS'] = M['nLABEL'].map(LCS.set_index('nLABEL')['LCS']).fillna(0).astype(int)
+    LCS = L.groupby('Paper_y').size().reset_index(name='LCS')
+
+    M['LCS'] = (
+    M.index.to_series()
+    .map(LCS.set_index('Paper_y')['LCS'])
+    .fillna(0)
+    .astype(int))
 
     # Prepare histData
-    histData = M[M['TC'] >= min_citations][['LABEL', 'TI', 'DE', 'ID', 'DI', 'PY', 'LCS', 'TC']]
-    histData.columns = ['Paper', 'Title', 'Author_Keywords', 'KeywordsPlus', 'DOI', 'Year', 'LCS', 'GCS']
+    histData = M[M['TC'] >= min_citations][
+    ['UT', 'TI', 'DE', 'ID', 'DI', 'PY', 'LCS', 'TC']
+    ].copy()
 
+    histData.columns = [
+    'Paper',
+    'Title',
+    'Author_Keywords',
+    'KeywordsPlus',
+    'DOI',
+    'Year',
+    'LCS',
+    'GCS'
+]
     WLCR = None
     if network:
         # Build citation network
-        CITING = L.groupby('CITING').agg(
-            LCR=('LABEL', lambda x: ';'.join(x.dropna())),
-            PY=('CIT_PY', 'first'),
-            Paper=('Paper_CR', 'first')
-        ).reset_index().sort_values(by='PY')
+        CITING = L.groupby("CITING").agg(
+        LCR=("CITED", lambda x: ";".join(x.astype(str))),
+        PY=("CIT_PY", "first"),
+        Paper=("Paper_x", "first")
+    ).reset_index().sort_values(by="PY")
 
         # Assign LCR to the correct Paper index (Paper is 0-based)
         M['LCR'] = ""
@@ -132,10 +194,17 @@ def wos(M, min_citations, sep, network):
         M.index = M['LABEL'].str.strip()
 
         M['LCR'] = M['LCR'].fillna('')
-
+    
         # Ensure all papers are included as both rows and columns
-        WLCR = cocMatrix(reactive.Value(M), Field="LCR", sep=sep)
+        WLCR = cocMatrix(M, Field="LCR", sep=sep)
         
+        if WLCR is None:
+          print("No Local Citation Relationships found.")
+          return {
+           "histData": pd.DataFrame(),
+           "M": M,
+           "LCS": []
+           }
         # Trova le LABEL mancanti
         missing_LABEL = set(M.index) - set(WLCR.columns)
         

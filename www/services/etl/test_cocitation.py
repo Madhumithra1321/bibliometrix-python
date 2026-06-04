@@ -8,8 +8,8 @@ df = openalex_pipeline(
 
 net = biblionetwork(
     df,
-    analysis="co-occurrences",
-    network="keywords"
+    analysis="co-citation",
+    network="references"
 )
 
 print(type(net))

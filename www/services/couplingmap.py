@@ -62,13 +62,24 @@ def couplingMap(df, analysis="documents", field="CR", n=500, minfreq=5,
     C = L.merge(Net['cluster_res'], on=analysis, how='left', copy=True)
     
     # Get group membership and colors
-    group = Net['cluster_obj'].membership
-    color = net.vs['color']
-    
-    # Convert colors to hex and handle NaN values
-    color = [to_hex(c) if pd.notna(c) else "#D3D3D3" for c in color]
-    # color[pd.isna(color)] = "#B3B3B3" # Colore grigio chiaro in formato RGBA
+    group = list(Net['cluster_obj'].membership)
+    color = list(net.vs['color'])
 
+    # Convert colors
+    color = [
+    to_hex(c) if pd.notna(c) else "#D3D3D3"
+    for c in color
+    ]
+
+    # Make lengths match
+    min_len = min(len(D), len(group), len(color))
+
+    D = D.iloc[:min_len].copy()
+
+    group = group[:min_len]
+    color = color[:min_len]
+    
+    
     D['group'] = group
     D['color'] = color
 

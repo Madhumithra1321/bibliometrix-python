@@ -12,5 +12,6 @@ result = couplingMap(
     field="CR"
 )
 
-print(type(result))
-print(result.keys())
+print(result["clusters"].head())
+print(result["data"].head())
+print(result["nclust"])

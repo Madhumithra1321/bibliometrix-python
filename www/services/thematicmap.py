@@ -7,13 +7,13 @@ from .biblionetwork import *
 def thematic_map(df, field="ID", n=250, minfreq=5, ngrams=1, stemming=False, size=0.5, n_labels=1, community_repulsion=0.1, repel=True, remove_terms=None, synonyms=None, cluster="walktrap", subgraphs=False):
         # df = metaTagExtraction(df, field=field)
         M = df
-        m = df.get()
+    
 
         # Set ngrams based on field
         ngrams = int(ngrams) if field in ['TI', 'AB'] else 1
         # Set stemming as boolean
         stemming = True if stemming == "Yes" else False
-        minfreq = max(0, int(minfreq * len(m) // 1000))
+        minfreq = max(0, int(minfreq * len(M) // 1000))
 
         # Preprocess field and create network matrix
         if field == "ID":
@@ -314,8 +314,7 @@ def thematic_map(df, field="ID", n=250, minfreq=5, ngrams=1, stemming=False, siz
             )
         )
         fig = go.FigureWidget(fig)
-        fig._config = fig._config | {'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'],
-                                     'displaylogo': False}
+        fig._config = fig._config | {'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'],'displaylogo': False}
 
         ##############################################################################################################################################
 
@@ -335,7 +334,7 @@ def thematic_map(df, field="ID", n=250, minfreq=5, ngrams=1, stemming=False, siz
         df = df[['Cluster', 'CallonCentrality', 'CallonDensity', 'RankCentrality', 'RankDensity', 'ClusterFrequency']]
 
         # Handle document clustering
-        document_to_clusters = cluster_assignment(M=m, words=df_lab, field=field, remove_terms=remove_terms, synonyms=synonyms, threshold=0.5)
+        document_to_clusters = cluster_assignment(M=M, words=df_lab, field=field, remove_terms=remove_terms, synonyms=synonyms, threshold=0.5)
 
         # Create parameters dictionary and unpack into dataframe
         params = {
@@ -660,14 +659,16 @@ def cluster_assignment(M, words, field, remove_terms=None, synonyms=None, thresh
     year = pd.Timestamp.now().year + 1
     
     M = M.reset_index(drop=True)
-    terms = (M.assign(
+    terms = (
+    M.assign(
         TCpY=lambda x: x['TC']/(year-x['PY']),
         NTC=lambda x: x.groupby('PY')['TC'].transform(lambda y: y/y.mean())
-    )[['DI', 'AU', 'TI', 'SO', 'PY', 'TC', 'TCpY', 'NTC', 'SR']]
-        .merge(terms, on='SR')
-        .fillna(0)
-        .groupby('Assigned_cluster')
-        .apply(lambda x: x.sort_values('TC', ascending=False))
-        .reset_index(drop=True))
-
+    )[['DI','AU','TI','SO','PY','TC','TCpY','NTC','SR']]
+    .merge(terms, on='SR')
+    .fillna(0)
+    .infer_objects(copy=False)
+    .groupby('Assigned_cluster')
+    .apply(lambda x: x.sort_values('TC', ascending=False))
+    .reset_index(drop=True))
+    
     return terms
