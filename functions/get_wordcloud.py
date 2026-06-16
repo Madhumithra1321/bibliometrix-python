@@ -106,7 +106,7 @@ def table_tag(df, tag, ngrams=1, remove_terms=None, synonyms=None):
     """
     Extract and count words from a specified field in the DataFrame.
     """
-    M = df.get()
+    M = df
     
     # Remove duplicates
     M = M.drop_duplicates(subset='SR')

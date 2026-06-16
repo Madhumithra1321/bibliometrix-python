@@ -20,7 +20,7 @@ def term_extraction(df, field="TI", ngrams=1, stemming=False, language="english"
     Returns:
         A DataFrame with the extracted terms.
     """
-    M = df.get()
+    M = df
 
     # Load and update stopwords
     overall_start_time = time.time()

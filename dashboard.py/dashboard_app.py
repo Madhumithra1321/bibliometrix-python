@@ -45,9 +45,10 @@ colA, colB = st.columns([3, 1])
 
 with colA:
     query = st.text_input(
-        "",
-        placeholder="🔍 Search topics like AI, Machine Learning, Data Science..."
-    )
+    "Search Topic",
+    placeholder="🔍 Search topics like AI, Machine Learning, Data Science...",
+    label_visibility="collapsed"
+)
 
 with colB:
     max_results = st.selectbox(
@@ -134,7 +135,7 @@ fig.update_layout(
     showlegend=False
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 # ==================================================
 # TOP CITED PAPERS
@@ -153,13 +154,18 @@ font-weight:700;'>
 if "TC" in df.columns:
 
     top_papers = (
-        df.sort_values("TC", ascending=False)
-        [["TI", "TC"]]
-        .head(10)
-    )
+    df.sort_values("TC", ascending=False)
+      [["TI", "TC", "PY"]]
+      .head(10)
+      .reset_index(drop=True)
+)
 
-    st.dataframe(top_papers, use_container_width=True)
+st.dataframe(
+    top_papers,
+    width="stretch"
+)
 
+st.write("Rows shown:", len(top_papers))
 # ==================================================
 # TOP AUTHORS
 # ==================================================

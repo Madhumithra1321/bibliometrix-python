@@ -20,7 +20,7 @@ def get_local_cited_authors(df, num_of_cited_authors, fast_search=False):
         loccit = 1
 
     df = metaTagExtraction(df, "SR")
-    M = df.get()
+    M = df
     
     # Fill missing values
     M['TC'] = M['TC'].fillna(0)

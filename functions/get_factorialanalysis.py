@@ -74,7 +74,7 @@ def get_factorial_analysis(
     # Set ngrams based on word_type
     ngrams = int(ngram) if field in ['TI', 'AB'] else 1
 
-    M = df.get()
+    M = df
     tab = table_tag(M, field, ngrams)
     
     if len(tab) >= 2:

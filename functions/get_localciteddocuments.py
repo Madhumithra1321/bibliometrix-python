@@ -14,7 +14,7 @@ def get_local_cited_documents(df, num_of_local_cited_docs, field_separator, fast
         A Plotly figure object and a DataFrame of the most local cited documents.
     """
     df = metaTagExtraction(df, "SR")
-    M = df.get()
+    M = df
 
     # Determine the local citation threshold
     if fast_search:

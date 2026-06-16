@@ -479,7 +479,7 @@ def field_by_year(df, field_cn, timespan=None, min_freq=2, n_items=5, remove_ter
         The field to analyze ('ID', 'DE', 'TI', 'AB', 'WC')
     """
     # Get the field data
-    M = df.get()
+    M = df
     
     # Create co-occurrence matrix
     A = cocMatrix(df, field_cn, binary=False, remove_terms=remove_terms, synonyms=synonyms)
